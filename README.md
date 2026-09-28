@@ -1,6 +1,6 @@
 # Vali 🌸 — a personal cycle tracker
 
-A private, Flo-style period tracker built just for Vali. It's a web app she installs on her iPhone home screen. Her data stays on her phone.
+A private, period tracker built just for one person. It's a web app she installs on her iPhone home screen. Her data stays on her phone.
 
 ## What's in the folder
 
