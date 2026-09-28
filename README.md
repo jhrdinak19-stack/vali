@@ -44,3 +44,4 @@ Then open http://localhost:8000.
 - **v3:** daily wellbeing log (plus private features), yearly date notes, version label
 - **v4:** Insights tab (history, charts, cycle reports, gentle alerts), printable summary, daily tips, at-a-glance tiles, section visibility settings, stricter backup checks
 - **v5:** removed the optional lock for now, more reliable updates
+- **v6:** screens load independently, so one problem can't blank the others
