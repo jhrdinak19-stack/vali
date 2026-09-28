@@ -182,7 +182,62 @@ function closeLog() {
 // Wrapped in a function that app.js calls once at startup, because this
 // file loads before app.js (where helpers like $ are defined).
 
+// ---------- Drag down to close --------------------------------------
+// Put a finger on the top part of the sheet (the handle / date) and drag
+// down. The sheet follows the finger. Let go far enough down (or flick
+// down quickly) and it closes; otherwise it springs back up.
+// Everything she tapped is already saved, so closing never loses anything.
+
+function setupSheetDrag() {
+  const zone = $("sheet-drag");
+  const sheet = $("log-sheet");
+  const backdrop = $("sheet-backdrop");
+  let startY = null, startTime = 0, dy = 0, dragged = false;
+
+  zone.addEventListener("pointerdown", e => {
+    if (!logDay) return;
+    startY = e.clientY;
+    startTime = Date.now();
+    dy = 0;
+    dragged = false;
+  });
+
+  zone.addEventListener("pointermove", e => {
+    if (startY === null) return;
+    dy = Math.max(0, e.clientY - startY);   // only downwards
+    if (dy > 8 && !dragged) {
+      dragged = true;                       // small wobbles still count as a tap
+      // From now on, keep getting moves even if the finger leaves the zone.
+      // (Only once it's a real drag, so taps on ‹ › still work normally.)
+      zone.setPointerCapture(e.pointerId);
+    }
+    if (!dragged) return;
+    sheet.style.transition = "none";        // follow the finger exactly
+    sheet.style.transform = `translateY(${dy}px)`;
+    backdrop.style.opacity = String(Math.max(0, 1 - dy / sheet.offsetHeight));
+  });
+
+  const finish = () => {
+    if (startY === null) return;
+    const speed = dy / Math.max(1, Date.now() - startTime); // px per ms
+    startY = null;
+    // Clear the inline styles so the CSS animation takes over from here.
+    sheet.style.transition = "";
+    sheet.style.transform = "";
+    backdrop.style.opacity = "";
+    if (dragged && (dy > 120 || speed > 0.6)) closeLog();   // far enough, or a quick flick
+  };
+  zone.addEventListener("pointerup", finish);
+  zone.addEventListener("pointercancel", finish);
+
+  // If she dragged, don't also count it as a tap on the ‹ › buttons.
+  zone.addEventListener("click", e => {
+    if (dragged) { e.stopPropagation(); e.preventDefault(); dragged = false; }
+  }, true);
+}
+
 function setupDailyLog() {
+  setupSheetDrag();
   $("sheet-body").addEventListener("click", e => {
     const btn = e.target.closest("button[data-field]");
     if (!btn) return;

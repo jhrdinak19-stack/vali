@@ -11,7 +11,7 @@
    When you add a new file to the app, add it to FILES below too.
    ===================================================================== */
 
-const CACHE = "vali-v6"; // keep this number the same as APP_VERSION in js/app.js
+const CACHE = "vali-v7"; // keep this number the same as APP_VERSION in js/app.js
 const FILES = [
   "./",
   "index.html",

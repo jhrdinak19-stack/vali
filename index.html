@@ -105,13 +105,17 @@
         <h2 id="cal-title"></h2>
         <button class="btn-icon" id="cal-next" aria-label="Next month">›</button>
       </div>
+      <!-- Swiping sideways anywhere in here changes the month (app.js) -->
+      <div id="cal-swipe-area">
       <div class="cal-weekdays">
         <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
       </div>
       <!-- app.js fills this grid with day buttons -->
       <div class="cal-grid" id="cal-grid"></div>
+      </div>
 
       <p class="muted center" id="cal-hint">Tap a day to see or add to its log.</p>
+      <p class="muted small center">Swipe the calendar left or right to change month.</p>
 
       <!-- Solid = logged by her, dashed = the app's prediction -->
       <div class="legend">
@@ -181,10 +185,14 @@
   <!-- ============ DAILY LOG SHEET (slides up from the bottom) ============ -->
   <div class="sheet-backdrop" id="sheet-backdrop"></div>
   <div class="sheet" id="log-sheet" role="dialog" aria-label="Daily log">
-    <div class="sheet-header">
-      <button class="btn-icon" id="sheet-prev" aria-label="Previous day">‹</button>
-      <h2 id="sheet-title">Today</h2>
-      <button class="btn-icon" id="sheet-next" aria-label="Next day">›</button>
+    <!-- Drag this top part down to close the sheet (dailyLog.js). Logs save as she taps. -->
+    <div class="sheet-drag" id="sheet-drag">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-header">
+        <button class="btn-icon" id="sheet-prev" aria-label="Previous day">‹</button>
+        <h2 id="sheet-title">Today</h2>
+        <button class="btn-icon" id="sheet-next" aria-label="Next day">›</button>
+      </div>
     </div>
     <!-- dailyLog.js builds the sections in here from logConfig.js -->
     <div class="sheet-body" id="sheet-body"></div>

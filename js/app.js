@@ -13,7 +13,7 @@
 // ---------- Version --------------------------------------------------
 // Bump this with every update you upload (and the CACHE name in sw.js too).
 // It shows at the bottom of Settings so you can check which version a phone has.
-const APP_VERSION = 6;
+const APP_VERSION = 7;
 
 // ---------- App state ------------------------------------------------
 let data = loadData();          // everything we save (from storage.js)
@@ -192,6 +192,17 @@ function renderGlance(s, phase, today) {
 
 // ---------- Rendering: Calendar screen -------------------------------
 
+/**
+ * Did she log intercourse on this day? (Protected or unprotected, from
+ * the Sex section.) Returns false if she has hidden that section, so the
+ * heart never shows when she's chosen to keep it out of sight.
+ */
+function hadIntercourse(key) {
+  if (!sectionVisible("sex")) return false;
+  const sex = data.logs[key]?.sex || [];
+  return sex.includes("protected") || sex.includes("unprotected");
+}
+
 function renderCalendar() {
   const year = calendarMonth.getFullYear();
   const month = calendarMonth.getMonth();
@@ -221,7 +232,7 @@ function renderCalendar() {
     btn.textContent = d;
     if (dayMap[key]) btn.classList.add(dayMap[key]); // period / predicted / fertile / ovulation
     if (key === today) btn.classList.add("today");
-    if (data.logs[key]) btn.classList.add("has-log"); // small dot under the number
+    if (data.logs[key]) btn.classList.add(hadIntercourse(key) ? "has-heart" : "has-log"); // ♥ or small dot
 
     if (key > today) {
       btn.classList.add("future-disabled"); // can't log the future
@@ -333,18 +344,22 @@ document.querySelectorAll(".tab").forEach(tab => {
 });
 
 // Swiping: remember where the finger started, compare where it ended.
-let touchStartX = null, touchStartY = null;
+//  • On the calendar's day grid, a sideways swipe changes the MONTH.
+//  • Anywhere else, a sideways swipe changes the TAB.
+// Charts are fine to swipe on too: a tap on a bar barely moves, a swipe
+// moves at least 60px, so the two never get confused.
+let touchStartX = null, touchStartY = null, swipeOnCalendar = false;
 
 document.addEventListener("touchstart", e => {
-  // Don't treat typing in a box, or anything while the log sheet is open, as a swipe.
-  // Also not while the doctor summary is showing.
+  // Ignore swipes while typing in a box, or while the log sheet / doctor summary is open.
   const busy = ["sheet-open", "report-open"].some(c => document.body.classList.contains(c));
-  if (e.target.closest("input, textarea, .chart") || busy) {
+  if (e.target.closest("input, textarea") || busy) {
     touchStartX = null;
     return;
   }
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
+  swipeOnCalendar = Boolean(e.target.closest("#cal-swipe-area"));
 }, { passive: true });
 
 document.addEventListener("touchend", e => {
@@ -354,8 +369,14 @@ document.addEventListener("touchend", e => {
   touchStartX = null;
 
   // Only count it as a swipe if it's long enough and mostly sideways
-  // (so scrolling up and down doesn't switch tabs).
+  // (so scrolling up and down doesn't switch anything).
   if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+
+  if (swipeOnCalendar) {
+    // Finger moves left = next month (like turning a page), right = previous month.
+    changeMonth(dx < 0 ? 1 : -1);
+    return;
+  }
 
   const i = SCREENS.indexOf(currentScreen);
   // Swipe left (finger moves left) = go to the next tab on the right, like flipping pages.
@@ -389,14 +410,18 @@ document.querySelectorAll(".mode-btn").forEach(btn => {
   });
 });
 
-$("cal-prev").addEventListener("click", () => {
-  calendarMonth.setMonth(calendarMonth.getMonth() - 1);
+/** Move the calendar forward (+1) or back (-1) a month, with a little slide. */
+function changeMonth(step) {
+  calendarMonth.setMonth(calendarMonth.getMonth() + step);
   renderCalendar();
-});
-$("cal-next").addEventListener("click", () => {
-  calendarMonth.setMonth(calendarMonth.getMonth() + 1);
-  renderCalendar();
-});
+  const grid = $("cal-grid");
+  grid.classList.remove("slide-next", "slide-prev");
+  void grid.offsetWidth;                                   // restart the animation
+  grid.classList.add(step > 0 ? "slide-next" : "slide-prev");
+}
+
+$("cal-prev").addEventListener("click", () => changeMonth(-1));
+$("cal-next").addEventListener("click", () => changeMonth(1));
 
 // Settings inputs save when she leaves the field ("change" event).
 $("set-cycle").addEventListener("change", e => {

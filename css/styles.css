@@ -417,3 +417,28 @@ body.report-open { overflow: hidden; }
 
 /* Shown instead of a blank screen if something fails to load (v6) */
 .render-error { border-left: 5px solid #e0a040; font-size: 14px; }
+
+/* =====================================================================
+   VERSION 7: drag-to-close sheet, calendar month swipe, ♥ days
+   ===================================================================== */
+
+/* The top of the log sheet is the drag area. touch-action: none tells the
+   phone not to scroll here, so the drag goes to our code instead. */
+.sheet-drag { touch-action: none; cursor: grab; flex-shrink: 0; }
+.sheet-handle {
+  width: 44px; height: 5px; border-radius: 999px; margin: 10px auto 0;
+  background: var(--muted); opacity: .45;
+}
+.sheet-drag .sheet-header { padding-top: 8px; }
+
+/* Calendar month change: slide in from the side */
+.cal-grid.slide-next { animation: slideFromRight .25s ease; }
+.cal-grid.slide-prev { animation: slideFromLeft .25s ease; }
+
+/* A small heart (instead of the dot) on days she logged intercourse.
+   \2665 = ♥, and \FE0E asks the phone to draw it as text, not an emoji. */
+.day.has-heart::after {
+  content: "\2665\FE0E"; position: absolute; bottom: 4%;
+  font-size: 11px; line-height: 1; color: var(--accent);
+}
+.day.period.has-heart::after, .day.ovulation.has-heart::after { color: #fff; }

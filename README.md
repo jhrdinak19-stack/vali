@@ -45,3 +45,4 @@ Then open http://localhost:8000.
 - **v4:** Insights tab (history, charts, cycle reports, gentle alerts), printable summary, daily tips, at-a-glance tiles, section visibility settings, stricter backup checks
 - **v5:** removed the optional lock for now, more reliable updates
 - **v6:** screens load independently, so one problem can't blank the others
+- **v7:** swipe works everywhere on Insights, drag-down to close the log, swipe the calendar to change month, day markers
