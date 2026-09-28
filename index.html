@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<!--
+  index.html — the skeleton of the app
+  ------------------------------------------------------------------
+  HTML is the STRUCTURE (what's on the page). Styling lives in
+  css/styles.css and behaviour lives in the js/ files.
+  The app has 3 "screens" (Today, Calendar, Settings). Only one is shown
+  at a time. app.js switches between them when a tab is tapped.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- viewport-fit=cover lets the app use the full iPhone screen (notch area) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Vali</title>
+
+  <!-- These make it behave like a real app when added to the iPhone home screen -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Vali" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="theme-color" content="#f7c6d4" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- ============ HEADER ============ -->
+  <header class="app-header">
+    <h1 id="greeting">Hi Vali 🌸</h1>
+    <p id="today-date" class="muted"></p>
+  </header>
+
+  <main>
+    <!-- ============ TODAY SCREEN ============ -->
+    <section id="screen-today" class="screen active">
+      <!-- The big circle, like Flo's -->
+      <div class="ring" id="ring">
+        <p class="ring-small" id="ring-top">Period in</p>
+        <p class="ring-big" id="ring-main">–</p>
+        <p class="ring-small" id="ring-bottom"></p>
+      </div>
+
+      <button class="btn-primary" id="btn-log-today">Log period today</button>
+
+      <!-- Personal message card (messages come from personal.js) -->
+      <div class="card message-card">
+        <p class="card-label" id="phase-label">Today</p>
+        <p id="personal-message"></p>
+      </div>
+
+      <!-- Quick facts -->
+      <div class="card stats">
+        <div><p class="card-label">Next period</p><p id="stat-next">–</p></div>
+        <div><p class="card-label">Fertile window</p><p id="stat-fertile">–</p></div>
+        <div><p class="card-label">Avg cycle</p><p id="stat-cycle">–</p></div>
+        <div><p class="card-label">Avg period</p><p id="stat-period">–</p></div>
+      </div>
+
+      <p class="disclaimer">Predictions are estimates based on your logged cycles. Don't rely on them for birth control.</p>
+    </section>
+
+    <!-- ============ CALENDAR SCREEN ============ -->
+    <section id="screen-calendar" class="screen">
+      <div class="cal-header">
+        <button class="btn-icon" id="cal-prev" aria-label="Previous month">‹</button>
+        <h2 id="cal-title"></h2>
+        <button class="btn-icon" id="cal-next" aria-label="Next month">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+      </div>
+      <!-- app.js fills this grid with day buttons -->
+      <div class="cal-grid" id="cal-grid"></div>
+
+      <p class="muted center">Tap a day to mark or unmark it as a period day.</p>
+
+      <div class="legend">
+        <span><i class="dot period"></i>Period</span>
+        <span><i class="dot predicted"></i>Predicted</span>
+        <span><i class="dot fertile"></i>Fertile</span>
+        <span><i class="dot ovulation"></i>Ovulation</span>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS SCREEN ============ -->
+    <section id="screen-settings" class="screen">
+      <div class="card">
+        <p class="card-label">Theme</p>
+        <!-- app.js creates one swatch button per theme -->
+        <div class="theme-list" id="theme-list"></div>
+      </div>
+
+      <div class="card form">
+        <label>Name
+          <input type="text" id="set-name" maxlength="20" />
+        </label>
+        <label>Usual cycle length (days)
+          <input type="number" id="set-cycle" min="15" max="60" />
+        </label>
+        <label>Usual period length (days)
+          <input type="number" id="set-period" min="1" max="14" />
+        </label>
+        <p class="muted small">These are used until the app has learned from a couple of logged cycles.</p>
+      </div>
+
+      <div class="card">
+        <p class="card-label">Backup</p>
+        <p class="muted small">Your data is only stored on this phone. Save a backup now and then!</p>
+        <div class="btn-row">
+          <button class="btn-secondary" id="btn-export">Save backup</button>
+          <label class="btn-secondary">Restore backup
+            <input type="file" id="file-import" accept="application/json,.json" hidden />
+          </label>
+        </div>
+        <button class="btn-danger" id="btn-reset">Delete all data</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ BOTTOM TAB BAR ============ -->
+  <nav class="tabbar">
+    <button class="tab active" data-screen="today"><span>◉</span>Today</button>
+    <button class="tab" data-screen="calendar"><span>▦</span>Calendar</button>
+    <button class="tab" data-screen="settings"><span>⚙</span>Settings</button>
+  </nav>
+
+  <!-- Small pop-up message ("Saved!") -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Scripts load in order: helpers first, app.js last because it uses the others -->
+  <script src="js/cycle.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/personal.js"></script>
+  <script src="js/themes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
