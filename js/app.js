@@ -13,10 +13,16 @@
 // ---------- Version --------------------------------------------------
 // Bump this with every update you upload (and the CACHE name in sw.js too).
 // It shows at the bottom of Settings so you can check which version a phone has.
-const APP_VERSION = 4;
+const APP_VERSION = 5;
 
 // ---------- App state ------------------------------------------------
 let data = loadData();          // everything we save (from storage.js)
+// The PIN lock was removed in v5. Clear any old PIN left over from v4.
+if ("pinHash" in data.settings || "pinSalt" in data.settings) {
+  delete data.settings.pinHash;
+  delete data.settings.pinSalt;
+  saveData(data);
+}
 let calendarMonth = new Date(); // which month the calendar is showing
 calendarMonth.setDate(1);
 let markMode = "log";           // what tapping a calendar day does: "log", "period" or "ovulation"
@@ -258,7 +264,6 @@ function renderSettings() {
       <input type="checkbox" class="switch" data-section="${sec.id}" ${hidden.includes(sec.id) ? "" : "checked"} />
     </label>`).join("");
 
-  renderLockSettings(); // lock.js
 
   $("set-cycle").value = data.settings.cycleLength;
   $("set-period").value = data.settings.periodLength;
@@ -311,8 +316,8 @@ let touchStartX = null, touchStartY = null;
 
 document.addEventListener("touchstart", e => {
   // Don't treat typing in a box, or anything while the log sheet is open, as a swipe.
-  // Also not while the PIN screen or doctor summary is showing.
-  const busy = ["sheet-open", "locked", "report-open"].some(c => document.body.classList.contains(c));
+  // Also not while the doctor summary is showing.
+  const busy = ["sheet-open", "report-open"].some(c => document.body.classList.contains(c));
   if (e.target.closest("input, textarea, .chart") || busy) {
     touchStartX = null;
     return;
@@ -392,8 +397,8 @@ $("file-import").addEventListener("change", async e => {
   const file = e.target.files[0];
   if (!file) return;
   try {
-    // importBackup cleans the file and keeps this phone's PIN (see storage.js)
-    data = await importBackup(file, data);
+    // importBackup checks and cleans the file first (see storage.js)
+    data = await importBackup(file);
     saveAndRender();
     toast("Backup restored");
   } catch (err) {
@@ -466,5 +471,3 @@ $("section-toggles").addEventListener("change", e => {
 setupDailyLog(); // hook up the log sheet's buttons (dailyLog.js)
 setupReport();   // doctor summary buttons (report.js)
 render();
-setupLock();     // locks straight away if she has a PIN (lock.js)
-document.body.classList.remove("booting"); // safe to show the app now
