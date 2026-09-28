@@ -13,7 +13,7 @@
 // ---------- Version --------------------------------------------------
 // Bump this with every update you upload (and the CACHE name in sw.js too).
 // It shows at the bottom of Settings so you can check which version a phone has.
-const APP_VERSION = 3;
+const APP_VERSION = 4;
 
 // ---------- App state ------------------------------------------------
 let data = loadData();          // everything we save (from storage.js)
@@ -127,11 +127,18 @@ function renderToday() {
   const phase = s.empty ? "empty" : s.phase;
   $("phase-label").textContent = PHASE_LABELS[phase];
   $("personal-message").textContent = getPersonalMessage(phase, today);
+  $("phase-tip").textContent = getPhaseTip(phase, today);          // tips.js (#21)
+
+  // "Your last cycle report is ready" for the first 3 days of a new cycle (#20)
+  const hasFinishedCycle = groupPeriods(data.periodDays).length >= 2;
+  $("report-banner").hidden = !(hasFinishedCycle && !s.empty && s.cycleDay <= 3);
+
+  renderGlance(s, phase, today);
 
   // Today's log card: little chips for everything logged today
   const chips = summarizeLog(getLog(today));
   $("log-summary").innerHTML = chips.length
-    ? chips.map(c => `<span class="chip on small-chip"><span>${c.emoji}</span>${c.label}</span>`).join("")
+    ? chips.map(c => `<span class="chip on small-chip"><span>${escapeHTML(c.emoji)}</span>${escapeHTML(c.label)}</span>`).join("")
     : `<p class="muted small">How are you feeling today? Tap to log symptoms, mood and more.</p>`;
   $("log-card").querySelector(".log-card-action").textContent = chips.length ? "Edit" : "＋ Log";
 
@@ -147,6 +154,34 @@ function renderToday() {
   }
   $("stat-cycle").textContent = `${s.stats.avgCycle} days`;
   $("stat-period").textContent = `${s.stats.avgPeriod} days`;
+}
+
+// ---------- Today at a glance (#34) ----------------------------------
+// Small tiles: phase, water (tap to add a glass), sleep and mood.
+// Tiles for hidden log sections are left out.
+
+function renderGlance(s, phase, today) {
+  const log = getLog(today);
+  const SHORT = { period: "Period", follicular: "Follicular", fertile: "Fertile", ovulation: "Ovulation", luteal: "Luteal", late: "Late" };
+  const tiles = [{ label: "Phase", value: s.empty ? "–" : SHORT[phase], action: "none" }];
+
+  if (sectionVisible("water")) {
+    const water = LOG_SECTIONS.find(x => x.id === "water").fields[0];
+    tiles.push({ label: "Water · tap +1", value: `${log.water || 0}/${water.goal}`, action: "water" });
+  }
+  if (sectionVisible("sleep")) {
+    tiles.push({ label: "Sleep", value: log.sleepHours ? `${log.sleepHours} h` : "–", action: "log" });
+  }
+  if (sectionVisible("mood")) {
+    const mood = log.mood?.length ? findOption("mood", log.mood[0]) : null;
+    tiles.push({ label: "Mood", value: mood ? mood.emoji : "–", action: "log" });
+  }
+
+  $("glance").innerHTML = tiles.map(t => `
+    <button class="glance-tile" data-action="${t.action}" ${t.action === "none" ? "disabled" : ""}>
+      <span class="glance-value">${escapeHTML(t.value)}</span>
+      <span class="glance-label">${escapeHTML(t.label)}</span>
+    </button>`).join("");
 }
 
 // ---------- Rendering: Calendar screen -------------------------------
@@ -207,13 +242,23 @@ function renderSettings() {
         <i style="background:${theme.accent}"></i>
         <i style="background:${theme.accent2}"></i>
         <i style="background:${theme.fertile}"></i>
-      </div>${theme.label}`;
+      </div>${escapeHTML(theme.label)}`;
     btn.addEventListener("click", () => {
       data.settings.theme = id;
       saveAndRender();
     });
     list.appendChild(btn);
   }
+
+  // Log section switches (#29)
+  const hidden = data.settings.hiddenSections || [];
+  $("section-toggles").innerHTML = LOG_SECTIONS.map(sec => `
+    <label class="toggle-row">
+      <span>${escapeHTML(sec.emoji)} ${escapeHTML(sec.title)}</span>
+      <input type="checkbox" class="switch" data-section="${sec.id}" ${hidden.includes(sec.id) ? "" : "checked"} />
+    </label>`).join("");
+
+  renderLockSettings(); // lock.js
 
   $("set-cycle").value = data.settings.cycleLength;
   $("set-period").value = data.settings.periodLength;
@@ -229,6 +274,7 @@ function render() {
   renderToday();
   renderCalendar();
   renderSettings();
+  renderInsights(); // insights.js
   $("app-version").textContent = `Version ${APP_VERSION}`;
 }
 
@@ -236,7 +282,7 @@ function render() {
 
 // ---------- Switching screens (tabs + swiping) -----------------------
 
-const SCREENS = ["today", "calendar", "settings"]; // left-to-right order
+const SCREENS = ["today", "calendar", "insights", "settings"]; // left-to-right order
 let currentScreen = "today";
 
 /** Show a screen. The slide direction depends on whether it's to the left or right. */
@@ -265,7 +311,9 @@ let touchStartX = null, touchStartY = null;
 
 document.addEventListener("touchstart", e => {
   // Don't treat typing in a box, or anything while the log sheet is open, as a swipe.
-  if (e.target.closest("input, textarea") || document.body.classList.contains("sheet-open")) {
+  // Also not while the PIN screen or doctor summary is showing.
+  const busy = ["sheet-open", "locked", "report-open"].some(c => document.body.classList.contains(c));
+  if (e.target.closest("input, textarea, .chart") || busy) {
     touchStartX = null;
     return;
   }
@@ -344,8 +392,8 @@ $("file-import").addEventListener("change", async e => {
   const file = e.target.files[0];
   if (!file) return;
   try {
-    const imported = await importBackup(file);
-    data = { ...loadData(), ...imported, settings: { ...data.settings, ...imported.settings } };
+    // importBackup cleans the file and keeps this phone's PIN (see storage.js)
+    data = await importBackup(file, data);
     saveAndRender();
     toast("Backup restored");
   } catch (err) {
@@ -388,6 +436,35 @@ if ("serviceWorker" in navigator) {
 // Today's log card opens the log sheet for today.
 $("log-card").addEventListener("click", () => openLog(todayKey()));
 
+// "Report ready" banner goes to the Insights tab.
+$("report-banner").addEventListener("click", () => showScreen("insights"));
+
+// Glance tiles: water adds a glass, the others open today's log.
+$("glance").addEventListener("click", e => {
+  const tile = e.target.closest(".glance-tile");
+  if (!tile) return;
+  if (tile.dataset.action === "water") {
+    const today = todayKey();
+    setLogValue(today, "water", (getLog(today).water || 0) + 1, { redrawSheet: false });
+    toast("🥤 +1 glass");
+  } else if (tile.dataset.action === "log") {
+    openLog(todayKey());
+  }
+});
+
+// Log section switches in Settings (#29)
+$("section-toggles").addEventListener("change", e => {
+  const id = e.target.dataset.section;
+  if (!id) return;
+  const hidden = new Set(data.settings.hiddenSections || []);
+  e.target.checked ? hidden.delete(id) : hidden.add(id);
+  data.settings.hiddenSections = [...hidden];
+  saveAndRender();
+});
+
 // ---------- Start! ---------------------------------------------------
 setupDailyLog(); // hook up the log sheet's buttons (dailyLog.js)
+setupReport();   // doctor summary buttons (report.js)
 render();
+setupLock();     // locks straight away if she has a PIN (lock.js)
+document.body.classList.remove("booting"); // safe to show the app now

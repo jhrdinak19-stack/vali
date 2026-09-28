@@ -11,7 +11,7 @@
    When you add a new file to the app, add it to FILES below too.
    ===================================================================== */
 
-const CACHE = "vali-v3"; // keep this number the same as APP_VERSION in js/app.js
+const CACHE = "vali-v4"; // keep this number the same as APP_VERSION in js/app.js
 const FILES = [
   "./",
   "index.html",
@@ -23,6 +23,10 @@ const FILES = [
   "js/themes.js",
   "js/logConfig.js",
   "js/dailyLog.js",
+  "js/tips.js",
+  "js/insights.js",
+  "js/report.js",
+  "js/lock.js",
   "js/app.js",
   "icons/icon-192.png",
   "icons/icon-512.png",

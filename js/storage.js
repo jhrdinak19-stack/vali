@@ -17,10 +17,12 @@ const DEFAULT_DATA = {
   ovulationDays: [],       // days she logged ovulation, same format
   logs: {},                // daily logs: { "2026-09-28": { mood: ["happy"], ... } }
   settings: {
-    name: "Vali",
-    theme: "blossom",      // see the themes in css/styles.css
+    theme: "blossom",      // see js/themes.js
     cycleLength: 28,       // her usual cycle, used until we have real data
     periodLength: 5,       // her usual period length
+    hiddenSections: [],    // daily log sections she has hidden (ids from logConfig.js)
+    pinHash: null,         // PIN lock (see lock.js). Only a scrambled "hash" is stored,
+    pinSalt: null,         // never the PIN itself.
   },
 };
 
@@ -53,9 +55,16 @@ function saveData(data) {
   }
 }
 
-/** Download all data as a .json backup file. */
+/**
+ * Download all data as a .json backup file.
+ * The PIN is left out on purpose, so a backup file can never lock anyone out
+ * (and never contains anything about the lock).
+ */
 function exportBackup(data) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const copy = structuredClone(data);
+  delete copy.settings.pinHash;
+  delete copy.settings.pinSalt;
+  const blob = new Blob([JSON.stringify(copy, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = `vali-backup-${new Date().toISOString().slice(0, 10)}.json`;
@@ -63,13 +72,96 @@ function exportBackup(data) {
   URL.revokeObjectURL(link.href);
 }
 
-/** Read a backup file the user picked. Returns a Promise with the data. */
-function importBackup(file) {
-  return file.text().then(text => {
-    const data = JSON.parse(text);
-    if (!Array.isArray(data.periodDays)) throw new Error("Not a Vali backup file");
-    if (!Array.isArray(data.ovulationDays)) data.ovulationDays = []; // older backups
-    if (typeof data.logs !== "object" || !data.logs) data.logs = {};
-    return data;
-  });
+// ---------- Safety checks for restored backups ------------------------
+// A backup file is just text, so someone could hand-edit one. Before we
+// use a restored file we rebuild it from scratch, keeping ONLY values
+// that look exactly like what the app itself saves. Anything else is
+// thrown away. This means a strange file can never run code or show
+// unexpected things in the app.
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;          // "2026-09-28"
+const ID_RE = /^[a-z0-9_-]{1,40}$/i;              // option ids like "cramps"
+
+/** Keep only valid, unique date keys. */
+function cleanDates(list) {
+  return Array.isArray(list) ? [...new Set(list.filter(d => typeof d === "string" && DATE_RE.test(d)))].sort() : [];
+}
+
+/** Clean one day's log using the field types in logConfig.js. */
+function cleanLog(log) {
+  if (!log || typeof log !== "object" || Array.isArray(log)) return null;
+  const fieldTypes = {};
+  for (const s of LOG_SECTIONS) for (const f of s.fields) fieldTypes[f.id] = f;
+
+  const clean = {};
+  for (const [key, value] of Object.entries(log)) {
+    if (!ID_RE.test(key)) continue;
+    const f = fieldTypes[key];
+    const type = f ? f.type : null;
+    if (type === "text") {
+      if (typeof value === "string" && value.trim()) clean[key] = value.slice(0, 2000);
+    } else if (type === "number" || type === "counter") {
+      const n = Number(value);
+      const min = f.min ?? 0, max = f.max ?? 100;
+      if (typeof value === "number" && Number.isFinite(n) && n >= min && n <= max) clean[key] = n;
+    } else if (Array.isArray(value)) {                 // multi (or unknown list)
+      const ids = [...new Set(value.filter(v => typeof v === "string" && ID_RE.test(v)))];
+      if (ids.length) clean[key] = ids;
+    } else if (typeof value === "string" && ID_RE.test(value)) {
+      clean[key] = value;                              // single (or unknown choice)
+    }
+  }
+  return Object.keys(clean).length ? clean : null;
+}
+
+/** Rebuild a restored backup safely. Returns clean data (keeps the current PIN). */
+function sanitizeBackup(raw, current) {
+  if (!raw || typeof raw !== "object" || !Array.isArray(raw.periodDays)) {
+    throw new Error("Not a Vali backup file");
+  }
+  const logs = {};
+  if (raw.logs && typeof raw.logs === "object") {
+    for (const [day, log] of Object.entries(raw.logs)) {
+      if (!DATE_RE.test(day)) continue;
+      const clean = cleanLog(log);
+      if (clean) logs[day] = clean;
+    }
+  }
+  const s = raw.settings && typeof raw.settings === "object" ? raw.settings : {};
+  const inRange = (v, min, max, fallback) =>
+    Number.isInteger(v) && v >= min && v <= max ? v : fallback;
+  const sectionIds = LOG_SECTIONS.map(x => x.id);
+
+  return {
+    ...structuredClone(DEFAULT_DATA),
+    periodDays: cleanDates(raw.periodDays),
+    ovulationDays: cleanDates(raw.ovulationDays),
+    logs,
+    settings: {
+      ...DEFAULT_DATA.settings,
+      theme: THEMES[s.theme] ? s.theme : DEFAULT_DATA.settings.theme,
+      cycleLength: inRange(s.cycleLength, 15, 60, DEFAULT_DATA.settings.cycleLength),
+      periodLength: inRange(s.periodLength, 1, 14, DEFAULT_DATA.settings.periodLength),
+      hiddenSections: Array.isArray(s.hiddenSections)
+        ? s.hiddenSections.filter(id => sectionIds.includes(id)) : [],
+      // Never take a PIN from a file. Keep whatever PIN this phone already has.
+      pinHash: current.settings.pinHash,
+      pinSalt: current.settings.pinSalt,
+    },
+  };
+}
+
+/** Read a backup file she picked. Returns a Promise with safe, cleaned data. */
+function importBackup(file, current) {
+  if (file.size > 5 * 1024 * 1024) return Promise.reject(new Error("File too big"));
+  return file.text().then(text => sanitizeBackup(JSON.parse(text), current));
+}
+
+/**
+ * Make text safe to put inside HTML. Turns characters like < and > into
+ * harmless codes so they're shown as text, never treated as code.
+ */
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }

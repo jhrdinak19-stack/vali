@@ -25,7 +25,7 @@ const THEMES = {
     ovulation: "#7bb88f",        // ovulation day
   },
   rose: {
-    label: "Rose",               // soft Flo-like pinks
+    label: "Rose",               // soft pinks
     bg: "#fff5f7", surface: "#ffffff", text: "#40262e", muted: "#94747e",
     accent: "#f2587e", accent2: "#f59ab1",
     period: "#f2587e", predicted: "#fbd0dc", fertile: "#d9ecf7", ovulation: "#5aa9d6",

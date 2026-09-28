@@ -24,7 +24,8 @@
 
   <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body>
+<!-- "booting" hides the app until app.js has checked the PIN lock (no peeking) -->
+<body class="booting">
   <!-- ============ HEADER ============ -->
   <header class="app-header">
     <h1 id="greeting">Hello Love ❤️</h1>
@@ -34,7 +35,7 @@
   <main>
     <!-- ============ TODAY SCREEN ============ -->
     <section id="screen-today" class="screen active">
-      <!-- The big circle, like Flo's.
+      <!-- The big circle.
            The SVG draws two circles on top of each other:
            a light "track" (the whole ring) and a darker "progress" arc
            that fills clockwise from the top as her cycle goes on. -->
@@ -54,10 +55,22 @@
       <button class="btn-primary" id="btn-log-today">Log period today</button>
       <button class="btn-link" id="btn-log-ovulation">Log ovulation today</button>
 
+      <!-- Shows for the first few days of a new cycle (insights.js report) -->
+      <button class="card banner" id="report-banner" hidden>📊 Your last cycle report is ready <span>›</span></button>
+
       <!-- Personal message card (messages come from personal.js) -->
       <div class="card message-card">
         <p class="card-label" id="phase-label">Today</p>
         <p id="personal-message"></p>
+      </div>
+
+      <!-- Today at a glance (#34): app.js fills in the tiles -->
+      <div class="glance" id="glance"></div>
+
+      <!-- Tip of the day for her phase (#21, tips from tips.js) -->
+      <div class="card tip-card">
+        <p class="card-label">💡 Tip for today</p>
+        <p id="phase-tip"></p>
       </div>
 
       <!-- Today's daily log: shows what she logged, tap to open the log sheet -->
@@ -111,6 +124,11 @@
       </div>
     </section>
 
+    <!-- ============ INSIGHTS SCREEN (insights.js builds it) ============ -->
+    <section id="screen-insights" class="screen">
+      <div id="insights-content"></div>
+    </section>
+
     <!-- ============ SETTINGS SCREEN ============ -->
     <section id="screen-settings" class="screen">
       <div class="card">
@@ -127,6 +145,23 @@
           <input type="number" id="set-period" min="1" max="14" />
         </label>
         <p class="muted small">These are used until the app has learned from a couple of logged cycles.</p>
+      </div>
+
+      <!-- PIN lock (#28, lock.js) -->
+      <div class="card">
+        <p class="card-label">🔒 App lock</p>
+        <p class="muted small" id="lock-status"></p>
+        <div class="btn-row">
+          <button class="btn-secondary" id="btn-pin-set">Set a PIN</button>
+          <button class="btn-secondary" id="btn-pin-off" hidden>Turn off</button>
+        </div>
+      </div>
+
+      <!-- Show / hide daily log sections (#29). app.js fills in the switches -->
+      <div class="card">
+        <p class="card-label">Daily log sections</p>
+        <p class="muted small">Switch off anything you don't want to see. Hidden sections keep what you already logged.</p>
+        <div id="section-toggles"></div>
       </div>
 
       <div class="card">
@@ -150,6 +185,7 @@
   <nav class="tabbar">
     <button class="tab active" data-screen="today"><span>◉</span>Today</button>
     <button class="tab" data-screen="calendar"><span>▦</span>Calendar</button>
+    <button class="tab" data-screen="insights"><span>◐</span>Insights</button>
     <button class="tab" data-screen="settings"><span>⚙</span>Settings</button>
   </nav>
 
@@ -168,6 +204,48 @@
     </div>
   </div>
 
+  <!-- ============ DOCTOR SUMMARY (#22, report.js) ============ -->
+  <div class="report-view" id="report-view" role="dialog" aria-label="Doctor summary">
+    <div class="report-toolbar no-print">
+      <button class="btn-icon" id="report-close" aria-label="Close">✕</button>
+      <h2>Doctor summary</h2>
+      <span></span>
+    </div>
+    <div class="card no-print">
+      <p class="card-label">Time range</p>
+      <div class="chips" id="report-range"></div>
+      <p class="card-label" style="margin-top:14px">Include</p>
+      <div class="chips" id="report-sections"></div>
+      <p class="muted small" style="margin-top:8px">🔒 = private, off unless you switch it on.</p>
+    </div>
+    <div class="report-body" id="report-body"></div>
+    <div class="no-print report-actions">
+      <button class="btn-primary" id="report-print">Print / Save as PDF</button>
+      <p class="muted small center">On iPhone: in the print screen, tap Share (or pinch out on the preview) to save it as a PDF.</p>
+    </div>
+  </div>
+
+  <!-- ============ LOCK SCREEN (#28, lock.js) ============ -->
+  <div class="lock-screen" id="lock-screen">
+    <p class="lock-logo">🌸</p>
+    <h2 id="lock-title">Enter your PIN</h2>
+    <div class="lock-dots" id="lock-dots"></div>
+    <p class="lock-message" id="lock-message"></p>
+    <div class="lock-keypad" id="lock-keypad">
+      <button data-digit="1">1</button><button data-digit="2">2</button><button data-digit="3">3</button>
+      <button data-digit="4">4</button><button data-digit="5">5</button><button data-digit="6">6</button>
+      <button data-digit="7">7</button><button data-digit="8">8</button><button data-digit="9">9</button>
+      <span></span><button data-digit="0">0</button><button id="lock-delete" aria-label="Delete">⌫</button>
+    </div>
+    <button class="btn-link" id="lock-forgot">Forgot PIN?</button>
+    <button class="btn-link" id="lock-cancel" hidden>Cancel</button>
+    <div class="lock-reset-box" id="lock-reset-box" hidden>
+      <p class="small">For privacy, the PIN can't be recovered. You can erase the app's data to start fresh,
+        then restore a backup from Settings (backups don't include the PIN).</p>
+      <button class="btn-danger" id="lock-reset">Erase &amp; reset</button>
+    </div>
+  </div>
+
   <!-- Small pop-up message ("Saved!") -->
   <div class="toast" id="toast"></div>
 
@@ -178,6 +256,10 @@
   <script src="js/themes.js"></script>
   <script src="js/logConfig.js"></script>
   <script src="js/dailyLog.js"></script>
+  <script src="js/tips.js"></script>
+  <script src="js/insights.js"></script>
+  <script src="js/report.js"></script>
+  <script src="js/lock.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

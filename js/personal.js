@@ -44,7 +44,7 @@ const PHASE_MESSAGES = {
 // Always use two digits: March 8 is "03-08", not "3-8".
 const DATE_NOTES = {
    "2026-12-24": "Merry Christmas Eve! Check under the tree 🎄",
-   "2026-03-08" : "Happy Anniversary Baby, I love youuu!!!",
+   "2027-03-08" : "Happy Anniversary Baby, I love youuu!!!",
 };
 
 /** Pick today's message. Uses the date as a "seed" so it doesn't change on every refresh. */

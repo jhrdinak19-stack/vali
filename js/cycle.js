@@ -111,7 +111,7 @@ function getStats(periodDays, settings) {
  * Predict the next few cycles.
  * Ovulation usually happens about 14 days BEFORE the next period.
  * The fertile window is roughly 5 days before ovulation to 1 day after.
- * These are estimates only, like Flo's. Not for birth control!
+ * These are estimates only. Not for birth control!
  */
 function predictCycles(stats, count = 6) {
   if (!stats.lastStart) return [];
@@ -177,7 +177,7 @@ function getTodaySummary(periodDays, settings, ovulationDays = []) {
   const daysUntil = diffDays(today, next.periodStart);
   const onPeriod = periodDays.includes(today);
 
-  // Phase names, roughly matching what Flo shows.
+  // Standard cycle phase names.
   let phase;
   if (onPeriod) phase = "period";
   else if (ovulationDays.includes(today)) phase = "ovulation"; // she logged it

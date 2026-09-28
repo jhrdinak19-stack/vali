@@ -295,3 +295,151 @@ body.sheet-open { overflow: hidden; }       /* stop the page behind from scrolli
 .counter { display: flex; align-items: center; gap: 14px; }
 .counter .btn-icon { background: var(--bg); }
 .counter-value { font-size: 22px; font-weight: 700; min-width: 28px; text-align: center; }
+
+/* =====================================================================
+   VERSION 4: insights, glance, tips, PIN lock, doctor summary
+   ===================================================================== */
+
+/* Hide everything until app.js has checked the PIN lock */
+body.booting main, body.booting .tabbar, body.booting .app-header { visibility: hidden; }
+
+/* ---------- Today: banner, glance tiles, tip ---------- */
+.banner {
+  display: flex; justify-content: space-between; align-items: center; width: 100%;
+  font: inherit; font-weight: 600; color: var(--text); border: none; cursor: pointer;
+  border-left: 5px solid var(--accent);
+}
+.banner[hidden] { display: none; }
+.glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.glance-tile {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 12px 4px; border-radius: 16px; border: none;
+  background: var(--surface); color: var(--text); font: inherit;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, .05);
+}
+.glance-tile:disabled { opacity: 1; cursor: default; }
+.glance-value { font-size: 18px; font-weight: 700; }
+.glance-label { font-size: 11px; color: var(--muted); text-align: center; }
+.tip-card { border-left: 5px solid var(--predicted); }
+
+/* ---------- Settings: on/off switches ---------- */
+.toggle-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid rgba(0, 0, 0, .06); font-size: 15px;
+}
+.toggle-row:last-child { border-bottom: none; }
+.switch {
+  appearance: none; -webkit-appearance: none; flex-shrink: 0;
+  width: 46px; height: 28px; border-radius: 999px; position: relative; cursor: pointer;
+  background: rgba(0, 0, 0, .15); transition: background .2s;
+}
+.switch::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px;
+  border-radius: 50%; background: #fff; transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+}
+.switch:checked { background: var(--accent2); }
+.switch:checked::after { transform: translateX(18px); }
+.btn-secondary.wide { display: block; width: 100%; margin-bottom: 14px; padding: 14px; background: var(--surface); }
+
+/* ---------- Insights ---------- */
+.alert-card { border-left: 5px solid #e0a040; }
+.alert-card ul, .report-extras { padding-left: 18px; margin: 4px 0 8px; }
+.alert-card li, .report-extras li { margin-bottom: 4px; }
+.report-extras { list-style: none; padding-left: 0; font-size: 14px; }
+.report-big { display: flex; gap: 28px; margin: 6px 0 8px; }
+.big-number { font-size: 34px; font-weight: 700; color: var(--accent); line-height: 1; }
+
+/* Charts: thin marks, quiet grid, text in text colours */
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart-grid { stroke: var(--muted); stroke-opacity: .2; stroke-width: 1; }
+.chart-base { stroke: var(--muted); stroke-opacity: .5; stroke-width: 1; }
+.chart-axis { fill: var(--muted); font-size: 9px; }
+.chart-avg { stroke: var(--text); stroke-opacity: .55; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.chart-avg-label { fill: var(--text); font-weight: 600; }
+.chart-hit { fill: transparent; cursor: pointer; }
+.bar { transition: opacity .15s; }
+.bar-cycle { fill: var(--accent); }
+.bar-period { fill: var(--period); }
+.chart-bar.dim .bar { opacity: .3; }
+.chart-readout { min-height: 1.3em; margin-bottom: 4px; }
+
+/* Cycle history rows */
+.hist-legend { display: flex; gap: 14px; margin-bottom: 6px; }
+.hist-legend span { display: flex; align-items: center; gap: 6px; }
+.hist-row { padding: 10px 0; border-bottom: 1px solid rgba(0, 0, 0, .06); }
+.hist-row:last-child { border-bottom: none; }
+.hist-text { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-size: 15px; }
+.hist-bar { position: relative; display: flex; gap: 2px; height: 10px; }
+.hist-bar i { display: block; height: 100%; border-radius: 4px; }
+.hist-period { background: var(--period); }
+.hist-rest { background: var(--predicted); }
+.hist-rest.current { background: repeating-linear-gradient(45deg, var(--predicted) 0 4px, transparent 4px 7px); }
+.hist-ov {
+  position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  border-radius: 50%; background: var(--ovulation); border: 2px solid var(--surface);
+}
+
+/* ---------- Doctor summary (full screen) ---------- */
+.report-view {
+  position: fixed; inset: 0; z-index: 20; overflow-y: auto;
+  background: var(--bg); padding: calc(var(--safe-top) + 12px) 16px calc(var(--safe-bottom) + 24px);
+  display: none;
+}
+body.report-open .report-view { display: block; }
+body.report-open { overflow: hidden; }
+.report-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.report-toolbar h2 { font-size: 18px; }
+.report-toolbar span { width: 40px; }
+.report-body {
+  background: #fff; color: #222; border-radius: var(--radius); padding: 18px; margin-bottom: 16px;
+  font-size: 14px;
+}
+.report-body h1 { font-size: 20px; margin-bottom: 2px; }
+.report-body h3 { font-size: 15px; margin: 16px 0 6px; }
+.report-body .muted { color: #666; }
+.report-table { width: 100%; border-collapse: collapse; }
+.report-table th, .report-table td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #eee; vertical-align: top; }
+.report-table th { font-weight: 600; width: 40%; }
+.report-table.cycles th { width: auto; }
+.report-footnote { margin-top: 16px; font-size: 12px; color: #666; }
+.report-actions .btn-primary { margin-bottom: 8px; }
+
+/* When printing, show only the report itself */
+@media print {
+  body { padding: 0; background: #fff; }
+  body > *:not(#report-view) { display: none !important; }
+  .report-view { position: static; display: block !important; padding: 0; overflow: visible; background: #fff; }
+  .no-print { display: none !important; }
+  .report-body { border-radius: 0; padding: 0; }
+}
+
+/* ---------- PIN lock screen ---------- */
+.lock-screen {
+  position: fixed; inset: 0; z-index: 50;
+  display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background: var(--bg); padding: 24px;
+}
+body.locked .lock-screen { display: flex; }
+body.locked main, body.locked .tabbar, body.locked .app-header { visibility: hidden; } /* no peeking */
+.lock-logo { font-size: 44px; }
+.lock-screen h2 { font-size: 20px; }
+.lock-dots { display: flex; gap: 16px; margin: 8px 0; }
+.lock-dots i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--accent); }
+.lock-dots i.filled { background: var(--accent); }
+.lock-dots.shake { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+.lock-message { min-height: 1.3em; color: var(--accent); font-size: 14px; }
+.lock-keypad { display: grid; grid-template-columns: repeat(3, 72px); gap: 14px; margin: 8px 0; }
+.lock-keypad button {
+  width: 72px; height: 72px; border-radius: 50%; border: none;
+  background: var(--surface); color: var(--text); font: inherit; font-size: 26px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+}
+.lock-keypad button:active { background: var(--predicted); }
+.lock-screen .btn-link { margin: 0; }
+.lock-reset-box { max-width: 320px; text-align: center; }
+.lock-reset-box[hidden], .lock-screen .btn-link[hidden] { display: none; }
+
+/* Four tabs now, so slightly smaller labels */
+.tab { font-size: 11px; }

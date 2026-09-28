@@ -18,6 +18,15 @@ function getLog(key) {
   return data.logs[key] || {};
 }
 
+/**
+ * The log sections she hasn't hidden in Settings (feature #29).
+ * Hidden sections keep their data, they just aren't shown anywhere.
+ */
+function visibleSections() {
+  const hidden = data.settings.hiddenSections || [];
+  return LOG_SECTIONS.filter(s => !hidden.includes(s.id));
+}
+
 /** Is this value "empty"? (Nothing picked / typed.) */
 function isEmpty(value) {
   return value === undefined || value === null || value === "" ||
@@ -53,7 +62,7 @@ function setLogValue(key, fieldId, value, { redrawSheet = true } = {}) {
 /** Turn a day's log into a list of little chips: [{ emoji, label }, ...] */
 function summarizeLog(log) {
   const chips = [];
-  for (const section of LOG_SECTIONS) {
+  for (const section of visibleSections()) {
     for (const field of section.fields) {
       const value = log[field.id];
       if (isEmpty(value)) continue;
@@ -100,7 +109,7 @@ function fieldHTML(field, value) {
       <div class="number-row">
         <input type="number" inputmode="decimal" data-field="${field.id}" data-type="number"
                min="${field.min}" max="${field.max}" step="${field.step}"
-               value="${value ?? ""}" placeholder="–" />
+               value="${escapeHTML(value ?? "")}" placeholder="–" />
         <span class="muted">${field.unit}</span>
       </div>`;
   }
@@ -135,7 +144,12 @@ function renderLogSheet() {
     prettyDate(logDay, { weekday: "long", day: "numeric", month: "long" });
   $("sheet-next").disabled = logDay >= todayKey(); // can't log the future
 
-  body.innerHTML = LOG_SECTIONS.map(section => `
+  const sections = visibleSections();
+  if (!sections.length) {
+    body.innerHTML = `<p class="muted center">All log sections are hidden. You can turn them back on in Settings.</p>`;
+    return;
+  }
+  body.innerHTML = sections.map(section => `
     <section class="log-section">
       <h3>${section.emoji} ${section.title}</h3>
       ${section.fields.map(f => fieldHTML(f, log[f.id])).join("")}
