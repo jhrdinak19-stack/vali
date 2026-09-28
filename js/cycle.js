@@ -136,9 +136,10 @@ function predictCycles(stats, count = 6) {
  * Build a lookup of what each calendar day "is", so the calendar can
  * colour days quickly. Returns an object like:
  *   { "2026-10-01": "predicted", "2026-10-15": "ovulation", ... }
- * Logged period days win over predictions.
+ * Logged days (period / ovulation) win over predictions.
+ * Predicted ovulation is "ovulation-predicted" (dashed), logged is "ovulation" (solid).
  */
-function buildDayMap(periodDays, stats) {
+function buildDayMap(periodDays, stats, ovulationDays = []) {
   const map = {};
   const today = todayKey();
 
@@ -146,12 +147,18 @@ function buildDayMap(periodDays, stats) {
   // so the current cycle's fertile days are covered too.
   const cycles = predictCycles(stats);
   for (const c of cycles) {
-    for (let d = c.fertileStart; d <= c.fertileEnd; d = addDays(d, 1)) map[d] = "fertile";
-    map[c.ovulation] = "ovulation";
+    // If she logged ovulation in this cycle, skip the guessed ovulation/fertile days.
+    const cycleStart = addDays(c.periodStart, -stats.avgCycle);
+    const loggedThisCycle = ovulationDays.some(d => d >= cycleStart && d < c.periodStart);
+    if (!loggedThisCycle) {
+      for (let d = c.fertileStart; d <= c.fertileEnd; d = addDays(d, 1)) map[d] = "fertile";
+      map[c.ovulation] = "ovulation-predicted";
+    }
     for (let d = c.periodStart; d <= c.periodEnd; d = addDays(d, 1)) {
       if (d > today) map[d] = "predicted"; // only predict the future
     }
   }
+  for (const d of ovulationDays) map[d] = "ovulation";
   for (const d of periodDays) map[d] = "period";
   return map;
 }
@@ -160,7 +167,7 @@ function buildDayMap(periodDays, stats) {
  * The summary for the Today screen: cycle day, days until next period,
  * whether she's late, and which phase she's in.
  */
-function getTodaySummary(periodDays, settings) {
+function getTodaySummary(periodDays, settings, ovulationDays = []) {
   const stats = getStats(periodDays, settings);
   const today = todayKey();
   if (!stats.lastStart) return { stats, empty: true };
@@ -173,6 +180,7 @@ function getTodaySummary(periodDays, settings) {
   // Phase names, roughly matching what Flo shows.
   let phase;
   if (onPeriod) phase = "period";
+  else if (ovulationDays.includes(today)) phase = "ovulation"; // she logged it
   else if (daysUntil < 0) phase = "late";
   else if (today >= next.fertileStart && today <= next.fertileEnd) {
     phase = today === next.ovulation ? "ovulation" : "fertile";

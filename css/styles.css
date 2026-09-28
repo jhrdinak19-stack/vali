@@ -41,7 +41,14 @@ main { max-width: 480px; margin: 0 auto; }
 /* ---------- Screens: only the .active one is visible ---------- */
 .screen { display: none; }
 .screen.active { display: block; animation: fadeIn .25s ease; }
+/* Slide in from the side when switching tabs */
+.screen.active.from-right { animation: slideFromRight .25s ease; }
+.screen.active.from-left  { animation: slideFromLeft .25s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
+@keyframes slideFromRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; } }
+@keyframes slideFromLeft  { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; } }
+/* Stop the page from wobbling sideways while swiping */
+html, body { overflow-x: hidden; }
 
 /* ---------- Cards ---------- */
 .card {
@@ -62,17 +69,27 @@ main { max-width: 480px; margin: 0 auto; }
 
 /* ---------- The big ring on the Today screen ---------- */
 .ring {
+  position: relative;
   width: 250px; height: 250px; margin: 8px auto 20px;
   border-radius: 50%;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
   background: var(--surface);
-  border: 14px solid var(--predicted);
   box-shadow: 0 6px 24px rgba(0, 0, 0, .06);
-  text-align: center; padding: 20px;
 }
-.ring.on-period { border-color: var(--period); }
-.ring.fertile   { border-color: var(--fertile); }
-.ring.ovulation { border-color: var(--ovulation); }
+/* The SVG fills the whole ring. rotate(-90deg) makes the arc start at 12 o'clock. */
+.ring-svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-svg circle { fill: none; stroke-width: 7; }
+.ring-track { stroke: var(--predicted); }        /* light pink: the part still to come */
+.ring-progress {
+  stroke: var(--accent);                         /* darker pink: how far through the cycle */
+  stroke-linecap: round;                         /* rounded end on the arc */
+  transition: stroke-dashoffset 1s ease;         /* animates the fill when the app opens */
+}
+.ring.on-period .ring-progress { stroke: var(--period); }
+.ring-text {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 30px;
+}
 .ring-big { font-size: 40px; font-weight: 700; color: var(--accent); line-height: 1.1; }
 .ring-small { color: var(--muted); font-size: 15px; }
 
@@ -85,6 +102,24 @@ button, .btn-secondary { font: inherit; cursor: pointer; border: none; }
   background: var(--accent); color: #fff; font-weight: 600; font-size: 16px;
 }
 .btn-primary:active { transform: scale(.97); }
+#btn-log-today { margin-bottom: 6px; }
+/* Smaller text-style button under the main one */
+.btn-link {
+  display: block; margin: 0 auto 20px; padding: 8px 14px;
+  background: none; color: var(--accent2); font-weight: 600; font-size: 14px;
+}
+
+/* ---------- Period / Ovulation switch on the calendar ---------- */
+.mode-toggle {
+  display: flex; gap: 4px; padding: 4px; margin-bottom: 14px;
+  background: var(--surface); border-radius: 999px;
+}
+.mode-btn {
+  flex: 1; padding: 10px; border-radius: 999px;
+  background: none; color: var(--muted); font-weight: 600; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.mode-btn.active { background: var(--bg); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
 
 .btn-row { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
 .btn-secondary {
@@ -116,6 +151,7 @@ button, .btn-secondary { font: inherit; cursor: pointer; border: none; }
 .day.predicted { background: transparent; border: 2px dashed var(--period); }
 .day.fertile   { background: var(--fertile); }
 .day.ovulation { background: var(--ovulation); color: #fff; font-weight: 700; }
+.day.ovulation-predicted { background: var(--fertile); border: 2px dashed var(--ovulation); font-weight: 700; }
 .day.today     { outline: 3px solid var(--text); outline-offset: 1px; }
 .day.future-disabled { color: var(--muted); opacity: 1; } /* future days can't be tapped */
 .day.future-disabled.ovulation { color: #fff; }
@@ -127,6 +163,7 @@ button, .btn-secondary { font: inherit; cursor: pointer; border: none; }
 .dot.predicted { border: 2px dashed var(--period); }
 .dot.fertile { background: var(--fertile); }
 .dot.ovulation { background: var(--ovulation); }
+.dot.ovulation-predicted { border: 2px dashed var(--ovulation); }
 
 /* ---------- Settings ---------- */
 .theme-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }

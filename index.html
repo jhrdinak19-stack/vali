@@ -27,21 +27,32 @@
 <body>
   <!-- ============ HEADER ============ -->
   <header class="app-header">
-    <h1 id="greeting">Hi Vali 🌸</h1>
+    <h1 id="greeting">Hello Love ❤️</h1>
     <p id="today-date" class="muted"></p>
   </header>
 
   <main>
     <!-- ============ TODAY SCREEN ============ -->
     <section id="screen-today" class="screen active">
-      <!-- The big circle, like Flo's -->
+      <!-- The big circle, like Flo's.
+           The SVG draws two circles on top of each other:
+           a light "track" (the whole ring) and a darker "progress" arc
+           that fills clockwise from the top as her cycle goes on. -->
       <div class="ring" id="ring">
-        <p class="ring-small" id="ring-top">Period in</p>
-        <p class="ring-big" id="ring-main">–</p>
-        <p class="ring-small" id="ring-bottom"></p>
+        <svg class="ring-svg" viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="ring-track" cx="50" cy="50" r="45" />
+          <circle class="ring-progress" id="ring-progress" cx="50" cy="50" r="45"
+                  pathLength="100" stroke-dasharray="100" stroke-dashoffset="100" />
+        </svg>
+        <div class="ring-text">
+          <p class="ring-small" id="ring-top">Period in</p>
+          <p class="ring-big" id="ring-main">–</p>
+          <p class="ring-small" id="ring-bottom"></p>
+        </div>
       </div>
 
       <button class="btn-primary" id="btn-log-today">Log period today</button>
+      <button class="btn-link" id="btn-log-ovulation">Log ovulation today</button>
 
       <!-- Personal message card (messages come from personal.js) -->
       <div class="card message-card">
@@ -62,6 +73,11 @@
 
     <!-- ============ CALENDAR SCREEN ============ -->
     <section id="screen-calendar" class="screen">
+      <!-- Which kind of day a tap marks. app.js remembers the choice in `markMode`. -->
+      <div class="mode-toggle" role="group" aria-label="What to mark">
+        <button class="mode-btn active" data-mode="period"><i class="dot period"></i>Period</button>
+        <button class="mode-btn" data-mode="ovulation"><i class="dot ovulation"></i>Ovulation</button>
+      </div>
       <div class="cal-header">
         <button class="btn-icon" id="cal-prev" aria-label="Previous month">‹</button>
         <h2 id="cal-title"></h2>
@@ -73,13 +89,15 @@
       <!-- app.js fills this grid with day buttons -->
       <div class="cal-grid" id="cal-grid"></div>
 
-      <p class="muted center">Tap a day to mark or unmark it as a period day.</p>
+      <p class="muted center" id="cal-hint">Tap a day to mark or unmark it as a period day.</p>
 
+      <!-- Solid = logged by her, dashed = the app's prediction -->
       <div class="legend">
         <span><i class="dot period"></i>Period</span>
-        <span><i class="dot predicted"></i>Predicted</span>
-        <span><i class="dot fertile"></i>Fertile</span>
+        <span><i class="dot predicted"></i>Predicted period</span>
         <span><i class="dot ovulation"></i>Ovulation</span>
+        <span><i class="dot ovulation-predicted"></i>Predicted ovulation</span>
+        <span><i class="dot fertile"></i>Fertile window</span>
       </div>
     </section>
 
@@ -92,9 +110,6 @@
       </div>
 
       <div class="card form">
-        <label>Name
-          <input type="text" id="set-name" maxlength="20" />
-        </label>
         <label>Usual cycle length (days)
           <input type="number" id="set-cycle" min="15" max="60" />
         </label>

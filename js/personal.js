@@ -5,12 +5,16 @@
    You don't need to touch the other files to change the messages.
    ===================================================================== */
 
+// The greeting at the top of every screen.
+const GREETING = "Hello Love ❤️";
+
 // One of these shows on the Today screen, depending on her cycle phase.
 // Add as many as you like. A random one is picked each day.
 const PHASE_MESSAGES = {
   period: [
     "Cosy blanket + snacks mode activated. 🍫",
     "Take it easy today, you're doing amazing.",
+    "Stay strong baby, you're doing great!!!",
   ],
   follicular: [
     "Energy's coming back, go conquer the day!",
@@ -39,6 +43,7 @@ const PHASE_MESSAGES = {
 // anniversaries, or a random "I love you" on a Tuesday.
 const DATE_NOTES = {
   // "2026-12-24": "Merry Christmas Eve! Check under the tree 🎄",
+  // "2026-3-8" : "Happy Anniversary Baby, I love youuu!!!",
 };
 
 /** Pick today's message. Uses the date as a "seed" so it doesn't change on every refresh. */
