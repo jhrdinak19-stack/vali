@@ -38,17 +38,19 @@ const PHASE_MESSAGES = {
   ],
 };
 
-// Special notes for specific dates ("YYYY-MM-DD": "message").
-// These override the phase message on that day. Great for birthdays,
-// anniversaries, or a random "I love you" on a Tuesday.
+// Special notes for specific dates. These replace the phase message on that day.
+//   "MM-DD": "message"       -> shows EVERY year (birthdays, anniversaries)
+//   "YYYY-MM-DD": "message"  -> shows on that one date only
+// Always use two digits: March 8 is "03-08", not "3-8".
 const DATE_NOTES = {
-  // "2026-12-24": "Merry Christmas Eve! Check under the tree 🎄",
-  // "2026-3-8" : "Happy Anniversary Baby, I love youuu!!!",
+   "2026-12-24": "Merry Christmas Eve! Check under the tree 🎄",
+   "2026-03-08" : "Happy Anniversary Baby, I love youuu!!!",
 };
 
 /** Pick today's message. Uses the date as a "seed" so it doesn't change on every refresh. */
 function getPersonalMessage(phase, dateKey) {
-  if (DATE_NOTES[dateKey]) return DATE_NOTES[dateKey];
+  if (DATE_NOTES[dateKey]) return DATE_NOTES[dateKey];                   // exact date
+  if (DATE_NOTES[dateKey.slice(5)]) return DATE_NOTES[dateKey.slice(5)]; // "MM-DD", every year
   const list = PHASE_MESSAGES[phase] || PHASE_MESSAGES.follicular;
   const seed = Number(dateKey.replaceAll("-", "")); // e.g. 20260928
   return list[seed % list.length];

@@ -10,6 +10,8 @@ A private, Flo-style period tracker built just for Vali. It's a web app she inst
 | `css/styles.css` | How it looks: layout, sizes, rounded corners | changing the design |
 | `js/themes.js` | The colour themes | **adding a theme she asks for** |
 | `js/personal.js` | Your messages and date notes ❤ | **adding personal touches** |
+| `js/logConfig.js` | What she can log each day (sections and options) | **adding or changing symptoms, moods, etc.** |
+| `js/dailyLog.js` | The daily log pop-up sheet | changing how logging works |
 | `js/cycle.js` | The math: grouping periods, averages, predictions | changing how predictions work |
 | `js/storage.js` | Saving/loading data and backups | changing what gets saved |
 | `js/app.js` | Connects everything: draws the screens, handles taps | adding new behaviour |
@@ -44,6 +46,20 @@ Then open **http://localhost:8000** in Chrome. Press F12, then Ctrl+Shift+M to s
 To update the app later, upload the changed files. She gets the new version the next time she opens it with internet.
 
 > **Heads up:** the link will be public, but her *data* isn't. Each phone stores its own data. Still, use a repo name that doesn't advertise what it is if you prefer.
+
+## Update checklist (every time you publish)
+
+1. Bump `APP_VERSION` in `js/app.js` (e.g. 3 → 4).
+2. Set the same number in `CACHE` at the top of `sw.js` (`"vali-v4"`).
+3. If you added a new file, add it to the `FILES` list in `sw.js`.
+4. Test locally, then upload the changed files to GitHub.
+5. On the phone: close the app fully, reopen, and check **Settings → Version** at the bottom.
+
+## Version history
+
+- **v1:** period logging, calendar, predictions, themes, backup
+- **v2:** "Hello Love" greeting, progress ring, swipe between tabs, ovulation logging
+- **v3:** daily log (flow, symptoms, mood, energy, digestion, discharge, sex, sleep, water, weight, exercise, life events, medication, notes), yearly date notes, version label
 
 ## Roadmap
 

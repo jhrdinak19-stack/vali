@@ -15,6 +15,7 @@ const DEFAULT_DATA = {
   version: 1,              // bump this if we ever change the data shape
   periodDays: [],          // e.g. ["2026-09-01", "2026-09-02"]
   ovulationDays: [],       // days she logged ovulation, same format
+  logs: {},                // daily logs: { "2026-09-28": { mood: ["happy"], ... } }
   settings: {
     name: "Vali",
     theme: "blossom",      // see the themes in css/styles.css
@@ -68,6 +69,7 @@ function importBackup(file) {
     const data = JSON.parse(text);
     if (!Array.isArray(data.periodDays)) throw new Error("Not a Vali backup file");
     if (!Array.isArray(data.ovulationDays)) data.ovulationDays = []; // older backups
+    if (typeof data.logs !== "object" || !data.logs) data.logs = {};
     return data;
   });
 }

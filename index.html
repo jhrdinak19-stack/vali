@@ -60,6 +60,15 @@
         <p id="personal-message"></p>
       </div>
 
+      <!-- Today's daily log: shows what she logged, tap to open the log sheet -->
+      <button class="card log-card" id="log-card">
+        <div class="log-card-head">
+          <p class="card-label">Today's log</p>
+          <span class="log-card-action">＋ Log</span>
+        </div>
+        <div class="chips-summary" id="log-summary"></div>
+      </button>
+
       <!-- Quick facts -->
       <div class="card stats">
         <div><p class="card-label">Next period</p><p id="stat-next">–</p></div>
@@ -75,7 +84,8 @@
     <section id="screen-calendar" class="screen">
       <!-- Which kind of day a tap marks. app.js remembers the choice in `markMode`. -->
       <div class="mode-toggle" role="group" aria-label="What to mark">
-        <button class="mode-btn active" data-mode="period"><i class="dot period"></i>Period</button>
+        <button class="mode-btn active" data-mode="log">📝 Log</button>
+        <button class="mode-btn" data-mode="period"><i class="dot period"></i>Period</button>
         <button class="mode-btn" data-mode="ovulation"><i class="dot ovulation"></i>Ovulation</button>
       </div>
       <div class="cal-header">
@@ -89,7 +99,7 @@
       <!-- app.js fills this grid with day buttons -->
       <div class="cal-grid" id="cal-grid"></div>
 
-      <p class="muted center" id="cal-hint">Tap a day to mark or unmark it as a period day.</p>
+      <p class="muted center" id="cal-hint">Tap a day to see or add to its log.</p>
 
       <!-- Solid = logged by her, dashed = the app's prediction -->
       <div class="legend">
@@ -130,6 +140,9 @@
         </div>
         <button class="btn-danger" id="btn-reset">Delete all data</button>
       </div>
+
+      <!-- app.js fills in the version number (APP_VERSION) -->
+      <p class="muted small center" id="app-version"></p>
     </section>
   </main>
 
@@ -140,6 +153,21 @@
     <button class="tab" data-screen="settings"><span>⚙</span>Settings</button>
   </nav>
 
+  <!-- ============ DAILY LOG SHEET (slides up from the bottom) ============ -->
+  <div class="sheet-backdrop" id="sheet-backdrop"></div>
+  <div class="sheet" id="log-sheet" role="dialog" aria-label="Daily log">
+    <div class="sheet-header">
+      <button class="btn-icon" id="sheet-prev" aria-label="Previous day">‹</button>
+      <h2 id="sheet-title">Today</h2>
+      <button class="btn-icon" id="sheet-next" aria-label="Next day">›</button>
+    </div>
+    <!-- dailyLog.js builds the sections in here from logConfig.js -->
+    <div class="sheet-body" id="sheet-body"></div>
+    <div class="sheet-footer">
+      <button class="btn-primary" id="sheet-done">Done</button>
+    </div>
+  </div>
+
   <!-- Small pop-up message ("Saved!") -->
   <div class="toast" id="toast"></div>
 
@@ -148,6 +176,8 @@
   <script src="js/storage.js"></script>
   <script src="js/personal.js"></script>
   <script src="js/themes.js"></script>
+  <script src="js/logConfig.js"></script>
+  <script src="js/dailyLog.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

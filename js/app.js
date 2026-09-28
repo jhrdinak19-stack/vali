@@ -10,11 +10,16 @@
    never get out of sync with what's saved.
    ===================================================================== */
 
+// ---------- Version --------------------------------------------------
+// Bump this with every update you upload (and the CACHE name in sw.js too).
+// It shows at the bottom of Settings so you can check which version a phone has.
+const APP_VERSION = 3;
+
 // ---------- App state ------------------------------------------------
 let data = loadData();          // everything we save (from storage.js)
 let calendarMonth = new Date(); // which month the calendar is showing
 calendarMonth.setDate(1);
-let markMode = "period";        // what tapping a calendar day marks: "period" or "ovulation"
+let markMode = "log";           // what tapping a calendar day does: "log", "period" or "ovulation"
 
 // Shortcut: $("id") finds an element by id. Saves typing.
 const $ = id => document.getElementById(id);
@@ -52,6 +57,11 @@ function toggleDay(kind, key) {
   const i = list.indexOf(key);
   if (i >= 0) {
     list.splice(i, 1);                        // already marked: remove it
+    // Not a period day any more, so its flow no longer makes sense.
+    if (kind === "period" && data.logs[key]?.flow) {
+      delete data.logs[key].flow;
+      if (!Object.keys(data.logs[key]).length) delete data.logs[key];
+    }
   } else {
     list.push(key);                           // not marked: add it
     list.sort();
@@ -118,6 +128,13 @@ function renderToday() {
   $("phase-label").textContent = PHASE_LABELS[phase];
   $("personal-message").textContent = getPersonalMessage(phase, today);
 
+  // Today's log card: little chips for everything logged today
+  const chips = summarizeLog(getLog(today));
+  $("log-summary").innerHTML = chips.length
+    ? chips.map(c => `<span class="chip on small-chip"><span>${c.emoji}</span>${c.label}</span>`).join("")
+    : `<p class="muted small">How are you feeling today? Tap to log symptoms, mood and more.</p>`;
+  $("log-card").querySelector(".log-card-action").textContent = chips.length ? "Edit" : "＋ Log";
+
   // Quick stats
   if (s.empty) {
     ["stat-next", "stat-fertile"].forEach(id => ($(id).textContent = "–"));
@@ -163,12 +180,14 @@ function renderCalendar() {
     btn.textContent = d;
     if (dayMap[key]) btn.classList.add(dayMap[key]); // period / predicted / fertile / ovulation
     if (key === today) btn.classList.add("today");
+    if (data.logs[key]) btn.classList.add("has-log"); // small dot under the number
 
     if (key > today) {
       btn.classList.add("future-disabled"); // can't log the future
       btn.disabled = true;
     } else {
-      btn.addEventListener("click", () => toggleDay(markMode, key));
+      btn.addEventListener("click", () =>
+        markMode === "log" ? openLog(key) : toggleDay(markMode, key));
     }
     grid.appendChild(btn);
   }
@@ -210,6 +229,7 @@ function render() {
   renderToday();
   renderCalendar();
   renderSettings();
+  $("app-version").textContent = `Version ${APP_VERSION}`;
 }
 
 // ---------- Event listeners (hooking up the buttons) -----------------
@@ -244,8 +264,11 @@ document.querySelectorAll(".tab").forEach(tab => {
 let touchStartX = null, touchStartY = null;
 
 document.addEventListener("touchstart", e => {
-  // Don't treat typing in a box as a swipe.
-  if (e.target.closest("input")) { touchStartX = null; return; }
+  // Don't treat typing in a box, or anything while the log sheet is open, as a swipe.
+  if (e.target.closest("input, textarea") || document.body.classList.contains("sheet-open")) {
+    touchStartX = null;
+    return;
+  }
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
 }, { passive: true });
@@ -284,8 +307,11 @@ document.querySelectorAll(".mode-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     markMode = btn.dataset.mode;
     document.querySelectorAll(".mode-btn").forEach(b => b.classList.toggle("active", b === btn));
-    $("cal-hint").textContent = `Tap a day to mark or unmark it as ${
-      markMode === "period" ? "a period" : "an ovulation"} day.`;
+    $("cal-hint").textContent = {
+      log: "Tap a day to see or add to its log.",
+      period: "Tap a day to mark or unmark it as a period day.",
+      ovulation: "Tap a day to mark or unmark it as an ovulation day.",
+    }[markMode];
   });
 });
 
@@ -359,5 +385,9 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(err => console.warn("SW failed", err));
 }
 
+// Today's log card opens the log sheet for today.
+$("log-card").addEventListener("click", () => openLog(todayKey()));
+
 // ---------- Start! ---------------------------------------------------
+setupDailyLog(); // hook up the log sheet's buttons (dailyLog.js)
 render();
