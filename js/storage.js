@@ -21,8 +21,6 @@ const DEFAULT_DATA = {
     cycleLength: 28,       // her usual cycle, used until we have real data
     periodLength: 5,       // her usual period length
     hiddenSections: [],    // daily log sections she has hidden (ids from logConfig.js)
-    pinHash: null,         // PIN lock (see lock.js). Only a scrambled "hash" is stored,
-    pinSalt: null,         // never the PIN itself.
   },
 };
 
@@ -55,16 +53,9 @@ function saveData(data) {
   }
 }
 
-/**
- * Download all data as a .json backup file.
- * The PIN is left out on purpose, so a backup file can never lock anyone out
- * (and never contains anything about the lock).
- */
+/** Download all data as a .json backup file. */
 function exportBackup(data) {
-  const copy = structuredClone(data);
-  delete copy.settings.pinHash;
-  delete copy.settings.pinSalt;
-  const blob = new Blob([JSON.stringify(copy, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = `vali-backup-${new Date().toISOString().slice(0, 10)}.json`;
@@ -114,8 +105,8 @@ function cleanLog(log) {
   return Object.keys(clean).length ? clean : null;
 }
 
-/** Rebuild a restored backup safely. Returns clean data (keeps the current PIN). */
-function sanitizeBackup(raw, current) {
+/** Rebuild a restored backup safely. Returns clean data. */
+function sanitizeBackup(raw) {
   if (!raw || typeof raw !== "object" || !Array.isArray(raw.periodDays)) {
     throw new Error("Not a Vali backup file");
   }
@@ -144,17 +135,14 @@ function sanitizeBackup(raw, current) {
       periodLength: inRange(s.periodLength, 1, 14, DEFAULT_DATA.settings.periodLength),
       hiddenSections: Array.isArray(s.hiddenSections)
         ? s.hiddenSections.filter(id => sectionIds.includes(id)) : [],
-      // Never take a PIN from a file. Keep whatever PIN this phone already has.
-      pinHash: current.settings.pinHash,
-      pinSalt: current.settings.pinSalt,
     },
   };
 }
 
 /** Read a backup file she picked. Returns a Promise with safe, cleaned data. */
-function importBackup(file, current) {
+function importBackup(file) {
   if (file.size > 5 * 1024 * 1024) return Promise.reject(new Error("File too big"));
-  return file.text().then(text => sanitizeBackup(JSON.parse(text), current));
+  return file.text().then(text => sanitizeBackup(JSON.parse(text)));
 }
 
 /**

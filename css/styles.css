@@ -414,3 +414,6 @@ body.report-open { overflow: hidden; }
 
 /* Four tabs now, so slightly smaller labels */
 .tab { font-size: 11px; }
+
+/* Shown instead of a blank screen if something fails to load (v6) */
+.render-error { border-left: 5px solid #e0a040; font-size: 14px; }

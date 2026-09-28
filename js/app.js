@@ -13,7 +13,7 @@
 // ---------- Version --------------------------------------------------
 // Bump this with every update you upload (and the CACHE name in sw.js too).
 // It shows at the bottom of Settings so you can check which version a phone has.
-const APP_VERSION = 5;
+const APP_VERSION = 6;
 
 // ---------- App state ------------------------------------------------
 let data = loadData();          // everything we save (from storage.js)
@@ -272,15 +272,36 @@ function renderSettings() {
 // ---------- Render everything ----------------------------------------
 
 function render() {
+  // Version first, so it always shows (handy for checking updates).
+  $("app-version").textContent = `Version ${APP_VERSION}`;
   applyTheme(data.settings.theme);
   $("greeting").textContent = GREETING; // set in personal.js
   $("today-date").textContent = new Date().toLocaleDateString("en-GB",
     { weekday: "long", day: "numeric", month: "long" });
-  renderToday();
-  renderCalendar();
-  renderSettings();
-  renderInsights(); // insights.js
-  $("app-version").textContent = `Version ${APP_VERSION}`;
+
+  // Draw each screen separately. If one screen has a problem, the others
+  // still work, and the broken one shows a small note instead of going blank.
+  safeRender("screen-today", renderToday);
+  safeRender("screen-calendar", renderCalendar);
+  safeRender("screen-settings", renderSettings);
+  safeRender("screen-insights", renderInsights); // insights.js
+}
+
+/** Run one screen's drawing code. On an error, show a note rather than a blank screen. */
+function safeRender(screenId, fn) {
+  const note = $(screenId).querySelector(".render-error");
+  try {
+    fn();
+    note?.remove();
+  } catch (err) {
+    console.error(`Problem drawing ${screenId}:`, err);
+    if (!note) {
+      $(screenId).insertAdjacentHTML("afterbegin",
+        `<div class="card render-error">⚠️ Something didn't load on this screen. Close the app fully and open it again.
+         If it keeps happening, the update may not have uploaded completely.
+         <p class="muted small">${escapeHTML(err.message)}</p></div>`);
+    }
+  }
 }
 
 // ---------- Event listeners (hooking up the buttons) -----------------
