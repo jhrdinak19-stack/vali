@@ -16,7 +16,6 @@ A small, private cycle and wellbeing tracker, made as a personal project. It's a
 | `js/insights.js` | The Insights tab: history, charts, reports |
 | `js/report.js` | Printable summary |
 | `js/tips.js` | Daily tips |
-| `js/lock.js` | Optional PIN lock |
 | `js/storage.js` | Saving, loading and backups |
 | `js/app.js` | Connects everything and handles taps |
 | `sw.js` | Offline support |
@@ -43,4 +42,5 @@ Then open http://localhost:8000.
 - **v1:** calendar, predictions, themes, backup
 - **v2:** new greeting, progress ring, swipe navigation, extra day types
 - **v3:** daily wellbeing log (plus private features), yearly date notes, version label
-- **v4:** Insights tab (history, charts, cycle reports, gentle alerts), printable summary, daily tips, at-a-glance tiles, optional PIN lock, section visibility settings, stricter backup checks
+- **v4:** Insights tab (history, charts, cycle reports, gentle alerts), printable summary, daily tips, at-a-glance tiles, section visibility settings, stricter backup checks
+- **v5:** removed the optional lock for now, more reliable updates

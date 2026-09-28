@@ -11,7 +11,7 @@
    When you add a new file to the app, add it to FILES below too.
    ===================================================================== */
 
-const CACHE = "vali-v4"; // keep this number the same as APP_VERSION in js/app.js
+const CACHE = "vali-v5"; // keep this number the same as APP_VERSION in js/app.js
 const FILES = [
   "./",
   "index.html",
@@ -26,7 +26,6 @@ const FILES = [
   "js/tips.js",
   "js/insights.js",
   "js/report.js",
-  "js/lock.js",
   "js/app.js",
   "icons/icon-192.png",
   "icons/icon-512.png",
@@ -52,7 +51,9 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    fetch(event.request)
+    // cache: "no-cache" = always check with GitHub for the newest version,
+    // so the phone never mixes old and new files right after an update.
+    fetch(event.request, { cache: "no-cache" })
       .then(response => {
         const copy = response.clone();
         caches.open(CACHE).then(cache => cache.put(event.request, copy));

@@ -297,11 +297,9 @@ body.sheet-open { overflow: hidden; }       /* stop the page behind from scrolli
 .counter-value { font-size: 22px; font-weight: 700; min-width: 28px; text-align: center; }
 
 /* =====================================================================
-   VERSION 4: insights, glance, tips, PIN lock, doctor summary
+   VERSION 4: insights, glance, tips, doctor summary
    ===================================================================== */
 
-/* Hide everything until app.js has checked the PIN lock */
-body.booting main, body.booting .tabbar, body.booting .app-header { visibility: hidden; }
 
 /* ---------- Today: banner, glance tiles, tip ---------- */
 .banner {
@@ -413,33 +411,6 @@ body.report-open { overflow: hidden; }
   .no-print { display: none !important; }
   .report-body { border-radius: 0; padding: 0; }
 }
-
-/* ---------- PIN lock screen ---------- */
-.lock-screen {
-  position: fixed; inset: 0; z-index: 50;
-  display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-  background: var(--bg); padding: 24px;
-}
-body.locked .lock-screen { display: flex; }
-body.locked main, body.locked .tabbar, body.locked .app-header { visibility: hidden; } /* no peeking */
-.lock-logo { font-size: 44px; }
-.lock-screen h2 { font-size: 20px; }
-.lock-dots { display: flex; gap: 16px; margin: 8px 0; }
-.lock-dots i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--accent); }
-.lock-dots i.filled { background: var(--accent); }
-.lock-dots.shake { animation: shake .4s; }
-@keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
-.lock-message { min-height: 1.3em; color: var(--accent); font-size: 14px; }
-.lock-keypad { display: grid; grid-template-columns: repeat(3, 72px); gap: 14px; margin: 8px 0; }
-.lock-keypad button {
-  width: 72px; height: 72px; border-radius: 50%; border: none;
-  background: var(--surface); color: var(--text); font: inherit; font-size: 26px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
-}
-.lock-keypad button:active { background: var(--predicted); }
-.lock-screen .btn-link { margin: 0; }
-.lock-reset-box { max-width: 320px; text-align: center; }
-.lock-reset-box[hidden], .lock-screen .btn-link[hidden] { display: none; }
 
 /* Four tabs now, so slightly smaller labels */
 .tab { font-size: 11px; }
